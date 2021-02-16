@@ -24,7 +24,14 @@ class TickerTable(qt.QTableWidget):
     def addTicker(self, ticker):
         row = self.rowCount()
         self.insertRow(row)
-        self.conId2Row
+#        self.conId2Row get connection id by calling tdclient's equivalent of ib's reqMktData
+        for col in range(len(self.headers)):
+            item = qt.QTableWidgetItem('-')
+            self.setItem(row, col, item)
+        item = self.item(row, 0)
+        item.setText(ticker)
+
+        self.resizeColumnsToContents()
 
     def clearTickers(self):
         self.setRowCount(0)
@@ -45,21 +52,26 @@ class Window(qt.QWidget):
         layout.addWidget(self.connectButton)
 
         self.connectInfo = (clientId, refreshToken)
+        self.tdclient = td.TDClient(*self.connectInfo)
 
     def add(self, text=''):
-        return 0
+        text = text or self.edit.text()
+        if text:
+            ticker = text
+            self.table.addTicker(ticker)
+            self.edit.setText(text)
 
     def onConnectButtonClicked(self, _):
         #check connection status if not connected connect.
-        tdclient = td.TDClient(*self.connectInfo)
-        if not tdclient.isConnected():
+#        tdclient = td.TDClient(*self.connectInfo)
+        if not self.tdclient.isConnected():
             self.table.clearTickers()
             self.connectButton.setText('Connect')
             exit()
 #            print(tdclient.search('AAPL'))
         else:
 
-            print(tdclient.accounts(positions=True))
+            print(self.tdclient.accounts(positions=True))
 
             self.connectButton.setText('Disconnect')
             for symbol in ('AAPL', 'TSLA', 'VZ'):
