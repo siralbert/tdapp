@@ -26,6 +26,10 @@ class TickerTable(qt.QTableWidget):
         self.insertRow(row)
         self.conId2Row
 
+    def clearTickers(self):
+        self.setRowCount(0)
+        self.conId2Row.clear()
+
 class Window(qt.QWidget):
 
     def __init__(self, clientId, refreshToken):
@@ -48,20 +52,29 @@ class Window(qt.QWidget):
     def onConnectButtonClicked(self, _):
         #check connection status if not connected connect.
         tdclient = td.TDClient(*self.connectInfo)
-        print(tdclient.search('AAPL'))
+        if not tdclient.isConnected():
+            self.table.clearTickers()
+            self.connectButton.setText('Connect')
+            exit()
+#            print(tdclient.search('AAPL'))
+        else:
+
+            print(tdclient.accounts(positions=True))
+
+            self.connectButton.setText('Disconnect')
+            for symbol in ('AAPL', 'TSLA', 'VZ'):
+                self.add(f"{symbol}")
+            self.add("Stock('ORCL', 'SMART', 'USD')")
+
         return 0
 
     def closeEvent(self, ev):
+        asyncio.get_event_loop().stop()
         return 0
 
 if __name__ == '__main__':
     refreshToken = open(os.path.expanduser('~/.r_token'), 'r')
     clientId = os.getenv("TDAMERITRADE_CLIENT_ID")
-#    tdclient = td.TDClient(client_id=os.getenv('TDAMERITRADE_CLIENT_ID'), refresh_token=refreshtoken)
-
-#    print(tdclient.search('AAPL'))
-    # test connection
-
 
     app = QApplication([])
     app.setStyle('Fusion')
@@ -86,10 +99,14 @@ if __name__ == '__main__':
 
     app.setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white;  }")
 
+    util.patchAsyncio()
+    util.useQt()
 
     window = Window(clientId, refreshToken)
     window.resize(600, 400)
     window.show()
-#   tdapp.run()
+
+#    tdapp.run()
+    util.run()
 
     app.exec_()
