@@ -4,7 +4,7 @@ from ib_insync import *
 import os
 import asyncio
 
-import util
+from util import *
 import wrapper
 
 from PyQt5.QtWidgets import QApplication
@@ -12,6 +12,7 @@ import PyQt5.QtWidgets as qt
 from PyQt5.QtGui import QPalette
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
+from PyQt5 import QtCore
 
 class TickerTable(qt.QTableWidget):
     headers = [
@@ -60,13 +61,19 @@ class TickerTable(qt.QTableWidget):
         self.setRowCount(0)
         self.conId2Row.clear()
 
+#    @QtCore.pyqtSlot("QModelIndex")
     def onBuyButtonClicked(self,_):
+
+#       col = 'symbol', row = ADD code to get row of Buy Button
+        row = self.row(self.selectedItems()[0])   # row of Buy button clicked
+        col = 0                                   # 'ticker' column
+        print(row, col)
+        item = self.item(row, col)
+        print(item.text())
+        ticker = item.text()
 
 #### if just the ticker is given:
 # automatically get option symbol for next Friday to input into placeIBTrade()
-        ticker = 'AAPL'
-#  col = 'symbol', row = ADD code to get row of Buy Button
-
         option_symbol = getOptionSymbol(ticker)
         print (option_symbol)
 # convert PG_121319C108 to  [expiry_date] [strike] [C] using regular expressions
@@ -78,7 +85,6 @@ class TickerTable(qt.QTableWidget):
 #placeIBTrade(args.ticker, dateIB, strike, 'C', c.midpoint(option_symbol)) # in ADP_120619C250 format(tdapi)
         if args.tdapi:
             c.placeOrder(args.order_type + stradd, args.size, option_symbol, 'LIMIT', c.midpoint(option_symbol, args.order_type))
-#        c.placeOrder(args.order_type + stradd, args.size, option_symbol, 'LIMIT', 0.05)
         else:
             placeIBTrade(IB_list[0], IB_list[1], IB_list[2], IB_list[3], c.midpoint(option_symbol, args.order_type))
 # return ToS option symbol Ex] .ADP191206C250 instead of (ADP_120619C250)
@@ -118,10 +124,11 @@ class Window(qt.QWidget):
     def onConnectButtonClicked(self, _):
         #check connection status if not connected connect.
 #        tdclient = td.TDClient(*self.connectInfo)
-        if not self.tdclient.isConnected():
+#        if not self.tdclient.isConnected():
+        if self.connectButton.text() == 'Disconnect':
             self.table.clearTickers()
             self.connectButton.setText('Connect')
-            exit()
+#            exit()
 #            print(tdclient.search('AAPL'))
         else:
 
@@ -131,6 +138,8 @@ class Window(qt.QWidget):
             for symbol in ('AAPL', 'TSLA', 'VZ'):
                 self.add(f"{symbol}")
             self.add("Stock('ORCL', 'SMART', 'USD')")
+            self.edit.setText('')
+            self.edit.setPlaceholderText('Enter Ticker Symbol . . .')
 
         return 0
 
